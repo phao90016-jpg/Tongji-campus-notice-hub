@@ -1,0 +1,32 @@
+name: 任务
+description: 不直接对应需求的工程任务（CI、部署、文档、重构等）
+title: "[TASK] "
+labels: ["type:task"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 任务目标
+      description: 一句话说明做完之后什么变了
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: 完成标准（可勾选）
+      value: |
+        - [ ] ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 领域
+      options: ["文档", "建模", "设计", "代码", "测试", "CI/部署", "AI 规范"]
+    validations:
+      required: true
+  - type: input
+    id: milestone
+    attributes:
+      label: 归属 Milestone
+      placeholder: 例如 v0.1

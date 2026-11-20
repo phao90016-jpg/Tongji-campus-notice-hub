@@ -1,0 +1,45 @@
+name: 缺陷
+description: 报告可复现的缺陷
+title: "[BUG] "
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 以学生身份登录
+        2. 订阅某 RSS 源
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+      description: 附日志、截图或接口响应
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 严重程度
+      options: ["S1 阻塞（主流程不可用）", "S2 严重（核心功能错误）", "S3 一般", "S4 轻微"]
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 环境
+      placeholder: 本地 / CI / 部署环境 + 浏览器或 Python 版本
+  - type: input
+    id: req-id
+    attributes:
+      label: 关联需求或用例编号
+      placeholder: 例如 REQ-F-012 / UC-09

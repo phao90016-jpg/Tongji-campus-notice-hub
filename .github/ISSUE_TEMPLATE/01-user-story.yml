@@ -1,0 +1,57 @@
+name: 用户故事
+description: 以用户故事形式提出需求，附 Given/When/Then 验收标准
+title: "[US] "
+labels: ["type:user-story"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > 需求先建 Issue，再开分支实现。验收标准要能被测试用例直接引用。
+  - type: dropdown
+    id: role
+    attributes:
+      label: 角色
+      options:
+        - 学生 student
+        - 班委 / 学生组织干事 publisher
+        - 系统管理员 admin
+        - 助教 / 教师（可选）
+        - 系统（定时任务）
+    validations:
+      required: true
+  - type: textarea
+    id: story
+    attributes:
+      label: 用户故事
+      description: 作为<角色>，我希望<目标>，以便<价值>
+      placeholder: 作为学生，我希望把订阅源的新公告汇总到一条通知流，以便不用逐个平台翻看。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准（Given / When / Then）
+      value: |
+        - Given ...
+          When ...
+          Then ...
+    validations:
+      required: true
+  - type: dropdown
+    id: increment
+    attributes:
+      label: 归属增量
+      options: ["v0.1", "v0.2", "v0.3", 未定]
+    validations:
+      required: true
+  - type: input
+    id: req-id
+    attributes:
+      label: 关联需求条目
+      description: 对应 SRS 中的编号，便于追溯
+      placeholder: 例如 REQ-F-012
+  - type: input
+    id: uc-id
+    attributes:
+      label: 关联用例编号
+      placeholder: 例如 UC-09
