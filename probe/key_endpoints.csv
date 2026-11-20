@@ -1,0 +1,19 @@
+﻿用途,接口,方法,路径,授权模式,需申请scope
+F3 活动报名截止,卓越星所有活动信息,GET,https://api.tongji.edu.cn/v1/rt/student_work_info/star/activity/page_all,客户端模式,rt_student_work_info_star_activity_page_all
+F2 课表(批量),学生本学期课表信息,GET,https://api.tongji.edu.cn/v2/dc/teaching_info/student_timetable,"客户端模式,授权码模式",dc_teaching_info_student_timetable
+F2 当前学期编号,当前学期日历编号,GET,https://api.tongji.edu.cn/v1/rt/onetongji/school_calendar_current_term_calendar,客户端模式,rt_onetongji_school_calendar_current_term_calendar
+F1/F2 教务通知自动接入,教务系统通知列表信息,GET,https://api.tongji.edu.cn/v1/rt/onetongji/msg_list,客户端模式,rt_onetongji_msg_list
+F2 通知正文,教务系统通知详情信息,GET,https://api.tongji.edu.cn/v1/rt/onetongji/msg_detail,客户端模式,rt_onetongji_msg_detail
+F2 课程维度归类,学生学期课表信息,GET,https://api.tongji.edu.cn/v1/rt/onetongji/student_timetable,"客户端模式,授权码模式",rt_onetongji_student_timetable
+F3 补缓考待办,重缓考应考学生信息,GET,https://api.tongji.edu.cn/v1/rt/teaching_info/deferred_examinfo,客户端模式,rt_teaching_info_deferred_examinfo
+F3 考试类待办,期末考试应考学生信息,GET,https://api.tongji.edu.cn/v1/rt/teaching_info/absent_examinfo,客户端模式,rt_teaching_info_absent_examinfo
+F3 图书到期(可选),图书当前借阅汇总信息-实时,GET,https://api.tongji.edu.cn/v2/rt/book/library_current_borrow,"客户端模式,授权码模式",rt_book_library_current_borrow
+F4 待办写入任务中心,推送任务数据,POST,https://api.tongji.edu.cn/v1/infra/task_center/push_task,"客户端模式,授权码模式",infra_task_center_push_task
+F3 导入一网通办待办,获取待办、已办列表,GET,https://api.tongji.edu.cn/v1/infra/task_center/task_list,"客户端模式,授权码模式",infra_task_center_task_list
+F4 企业微信提醒,企业微信消息通知,POST,https://api.tongji.edu.cn/v1/infra/notification/wecom,客户端模式,infra_notification_wecom
+F4 微信模板消息,微信模板消息通知,POST,https://api.tongji.edu.cn/v1/infra/notification/mp,"客户端模式,授权码模式",infra_notification_mp
+F4 邮件提醒,邮件通知,POST,https://api.tongji.edu.cn/v1/infra/notification/email,"客户端模式,授权码模式",infra_notification_email
+NFR-3 送达核查,获取消息发送结果,POST,https://api.tongji.edu.cn/v1/infra/notification/result,客户端模式,infra_notification_result
+F4 日程同步,日程列表,GET,https://api.tongji.edu.cn/v1/infra/calendar/list,"客户端模式,授权码模式",infra_calendar_list
+F4 写入个人日程,添加个人日程,POST,https://api.tongji.edu.cn/v1/infra/calendar/person/create,"客户端模式,授权码模式",infra_calendar_person_create
+F5 截图/PDF OCR,OCR-任务提交,POST,https://api.tongji.edu.cn/v1/ai/tools/file2md/task,客户端模式,ai_tools_file2md_task

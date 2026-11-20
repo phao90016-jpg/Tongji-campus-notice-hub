@@ -1,0 +1,68 @@
+{
+  "generated_at": "2026-11-20T15:29:35+0800",
+  "results": [
+    {
+      "id": "C1",
+      "name": "开放平台 client_credentials 取 token",
+      "verdict": "PASS",
+      "evidence": "HTTP 200 / 56ms / scope=fake_api / expires_in=7200s",
+      "feature": "所有校内数据接入"
+    },
+    {
+      "id": "C2",
+      "name": "学年学期信息（匿名）",
+      "verdict": "PASS",
+      "evidence": "HTTP 200 / 48ms / 66 个学期 / 首条 2027-2028第2学期 2028-02-14~2028-09-10 考试周 17-18",
+      "feature": "F2 截止时间/周次换算"
+    },
+    {
+      "id": "C3",
+      "name": "校历（匿名）",
+      "verdict": "BROKEN",
+      "evidence": "HTTP 200 / 业务码 A07500 / msg=数据库中暑假的开始结束时间缺失，请联系管理员录入 —— 接口在线但取不到数据",
+      "feature": "F2 节假日顺延"
+    },
+    {
+      "id": "C4",
+      "name": "scope 鉴权：课表接口",
+      "verdict": "PASS",
+      "evidence": "无 token -> 401；fake_api token -> 403 {}（证明接口按 scope 逐项授权，需申请对应 scope）",
+      "feature": "课表/考试/通知接入"
+    },
+    {
+      "id": "C5",
+      "name": "GitHub 公开 REST API + ETag 条件请求",
+      "verdict": "PASS",
+      "evidence": "HTTP 200 / 1552ms / ETag 复验 -> 304（304 表示可零配额增量拉取）/ 未授权配额 51/60 次/小时（按 IP 共享）",
+      "feature": "F1 GitHub 仓库订阅"
+    },
+    {
+      "id": "C6",
+      "name": "同济各站点 RSS/Atom 探测",
+      "verdict": "FAIL",
+      "evidence": "4 站点 × 4 常见路径全部未命中（404/非 XML）—— 选题中的“RSS 订阅官网”假设不成立",
+      "feature": "F1 RSS 订阅假设"
+    },
+    {
+      "id": "C7",
+      "name": "官网栏目 HTML 适配器（本科生院·通知公告）",
+      "verdict": "PASS",
+      "evidence": "列表 HTTP 200 / 54ms / 9 条；详情正文 412 字；同一文章两次抓取指纹 6bec6a97bd2817e7==6bec6a97bd2817e7 -> True",
+      "feature": "F1 官网公告接入 / NFR-2"
+    },
+    {
+      "id": "C8",
+      "name": "学院站点列表可解析性（计算机学院·通知公告）",
+      "verdict": "ADAPTER_NEEDED",
+      "evidence": "列表 HTTP 200 / 57ms / 10 条 / 最新 2026-11-19 / 链接形如 ../info/1051/3952.htm（与本科生院 c30359a…/page.htm 完全不同）；正文形态=PDF 转图片（可见文本 254 字 / 图 5 张），文本抽取前需 OCR",
+      "feature": "F1 适配器复用性 / F2 正文抽取"
+    },
+    {
+      "id": "C9",
+      "name": "内容指纹去重（NFR-2 口径）",
+      "verdict": "PASS",
+      "evidence": "3 次投喂得到 1 个指纹 -> 幂等判据可用（唯一索引 + upsert）",
+      "feature": "NFR-2 幂等去重"
+    }
+  ]
+}
