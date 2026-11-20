@@ -30,7 +30,7 @@
 
 1. **主源是校内结构化接口，不是网页抓取。**考试接口直接给 `examDate` + `examStartTime` + `roomName`，比从通知正文里猜时间可靠一个数量级。
 2. **结构化数据不强迫用户确认。**考试、课表、毕设节点生成的待办直接可用；只有从通知正文抽取的才走"草稿 → 用户确认"。
-3. **提醒投递外包给学校日程服务，本地只做兜底。**日程接口自带重复规则（每周上课）与多渠道提醒（站内/邮件/企业微信/微信），不必自己造调度器。
+3. **提醒由服务端直接投递到微信，不依赖学校渠道，也不依赖客户端常驻。**学生在页面上绑定一次微信服务号，之后到点由服务端发一条 HTTPS 请求，手机在微信「服务通知」里响；服务号失败自动降级到邮件。
 
 ---
 
@@ -73,9 +73,17 @@
 
 ### 5. 提醒
 
-- 每类待办设默认提前量（5 / 15 / 30 / 60 / 1440 分钟）与渠道，单条可覆盖
-- 已确认待办写入学校日程（带重复规则、`remindTimes`、`remindChannel`、回链 `linkUrl`）
-- 本地同时落一条提醒任务，用于平台不可用时兜底，以及 ±60s 准点率验收
+提醒由服务端投递：不依赖学校接口是否真的发消息，也不依赖网页开着。
+
+| 环节 | 做法 |
+|---|---|
+| 绑定 | 学生扫码关注微信服务号（Server酱 / PushPlus），把 SendKey 粘进「我的 → 通知渠道」，系统立即发一条测试消息验证 |
+| 投递 | 到点按「主通道 → 兜底」顺序发送：微信服务号 → 邮件 → 站内，任一成功即止 |
+| 失败 | 凭据失效、网络错误、服务商业务错误分别归类；网络错误重试 2 次，仍失败 3s 内降级，投递记录标红 |
+| 记录 | 每次尝试写一条（通道、耗时、结果码），后台可查每条待办实际走了哪条通道 |
+| 日程 | 已确认待办可同步到校园号日程，方便在日历里看到（可选，不承诺提醒） |
+
+准点率验收的是**服务端发出请求的时间**（计划时间 ±60s）；到达时间由服务商决定，不计入验收。
 
 ### 6. 资料与后台
 
@@ -98,10 +106,12 @@
 | 学年学期 | `GET /v1/rt/teaching_info/semester` | **匿名** | `beginDay`、`endDay`、`examWeekStart/End` |
 | 毕设节点 | `thesis_topic` · `midterm_assessment` · `pre_defense` | 客户端 / 授权码 | `topicTime`、`assessTime`、`defenseDate` + 地点 |
 | 一网通办待办 | `GET /v1/infra/task_center/task_list` | 客户端 / 授权码 | `taskId`、`nodeName`、`formUrl` |
-| 个人日程 | `POST /v1/infra/calendar/person/create` | 客户端 / 授权码 | `eventRepeatType`、`remindTimes`、`remindChannel` |
-| 消息推送 | `notification/email` · `wecom` · `mp` · `sms` | 客户端（部分含授权码） | `userId`、`content`、`time` |
+| 提醒投递 | Server酱 / PushPlus HTTPS 接口 | 用户 SendKey / Token | `title`、`desp`、`token` |
+| 个人日程（可选） | `POST /v1/infra/calendar/person/create` | 客户端 / 授权码 | `eventRepeatType`、`remindTimes`、`linkUrl` |
 | GitHub | `GET /repos/{owner}/{repo}/commits` | 公开 REST | `sha`、`commit.message`、`commit.author.date` |
 | 官网栏目 | 本科生院 `/30359/list.htm` 等 | 公开页面 | 列表条目、`div.wp_articlecontent` |
+
+> 学校消息服务（邮件 / 企业微信 / 模板消息）与个人日程只作为可选增强：写进去的日程不一定会触发提醒，模板消息需要用户关注并授权，因此提醒主链路不依赖它们。通道设计见 [通知通道](docs/04-设计/通知通道.md)。
 
 **三条硬事实**（详见 [可行性探测报告](docs/00-立项/可行性探测报告.md)）：
 
@@ -123,7 +133,7 @@
 **校内接口的调用约束**（重要）：
 
 - 支持授权码模式的接口 → 一律用当前登录用户的 token，`userId` 从 token 取，不接受前端传入
-- 仅客户端模式的接口（考试、教务通知、企业微信）→ 后端以应用身份调用，但入参 `userId` 必须等于当前登录用户，代码层断言 + 审计
+- 仅客户端模式的接口（考试、教务通知）→ 后端以应用身份调用，但入参 `userId` 必须等于当前登录用户，代码层断言 + 审计
 - 越权访问统一返回 `403`，且不泄露资源是否存在
 
 ---
@@ -147,9 +157,10 @@ flowchart LR
         B4["scheduler<br/>同步 · 提醒兜底"]
     end
 
-    subgraph out["提醒投递"]
-        D1["学校日程服务<br/>重复规则 + 多渠道"]
-        D2["邮件 / 企业微信 / 微信模板消息"]
+    subgraph out["提醒投递（服务端发起）"]
+        D0["notify<br/>Notifier 适配器"]
+        D1["微信服务号<br/>Server酱 / PushPlus"]
+        D2["邮件 SMTP<br/>兜底"]
     end
 
     subgraph fe["前端 Vue 3"]
@@ -165,8 +176,9 @@ flowchart LR
     B1 --> B2
     B2 --> B3
     B2 --> B4
-    B2 --> D1
-    B4 --> D2
+    B4 --> D0
+    D0 --> D1
+    D0 --> D2
     C1 --> B2
     C2 --> B2
     B1 -. 连续失败 3 次 .-> A4
@@ -185,7 +197,7 @@ flowchart LR
 | 增量 | 目标 | 交付内容 | 演示重点 |
 |---|---|---|---|
 | **v0.1** | 校内数据 → 一条流 | 学校 OAuth 登录、课表/考试/通知/毕设同步、官网 1 个适配器、GitHub 订阅、手动导入、通知流与去重 | 新账号登录后 10 秒看到"本周课表 + 考试 + 通知" |
-| **v0.2** | 结构化待办 → 提醒 | 七类结构化待办、文本草稿与确认、状态机、提醒规则、日程写入、多渠道推送、改期提示 | 改一条考场，日程与提醒更新并收到核对提示 |
+| **v0.2** | 结构化待办 → 提醒 | 七类结构化待办、文本草稿与确认、状态机、提醒规则、服务号绑定与投递、邮件兜底、投递记录、改期提示 | 确认一条待办，关掉网页，手机微信收到提醒；把 SendKey 改错再触发，自动降级到邮件 |
 | **v0.3** | 资料复用 + 管理面 | 收藏/标签/搜索、班委发布与阅读统计、源与同步任务监控、RBAC、审计、越权 403 | 双账号越权演示 + 后台源健康度与降级 |
 
 **并行任务**：第 1 周完成开放平台应用登记与 scope 申请、OAuth 回调地址备案。审批未到位时，v0.1 用"手动导入 + 官网 + GitHub"三条零依赖路径演示，校内接口以 mock 响应驱动开发。
@@ -197,10 +209,10 @@ flowchart LR
 | 层 | 选型 | 说明 |
 |---|---|---|
 | 前端 | Vue 3 + TypeScript + Vite | 学生端与管理后台同仓 |
-| 后端 | FastAPI（Python 3.11+） | 分层：`api` / `services` / `adapters` / `models` |
+| 后端 | FastAPI（Python 3.11+） | 分层：`api` / `services` / `adapters` / `notify` / `models` |
 | 数据库 | 开发 SQLite / 部署 PostgreSQL | 全文检索分别用 FTS5 / `tsvector` |
-| 调度 | 进程内调度 + 任务落库 | 同步任务与提醒兜底，启动补扫 |
-| 测试 | pytest + pytest-cov / Vitest | 适配器与状态机必须有单测 |
+| 调度 | 进程内调度 + 任务落库 | 同步任务与提醒投递，启动补扫 |
+| 测试 | pytest + pytest-cov / Vitest | 适配器、通道与状态机必须有单测 |
 | CI | GitHub Actions | ruff + pytest，红灯禁合并 |
 
 ---
@@ -214,6 +226,7 @@ python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 cp .env.example .env               # 填写 client_id / secret；.env 不提交
+                                   # 通知通道：SMTP 填在 .env；服务号凭据由用户在页面绑定，无需配置
 pytest -q                          # 应全绿
 uvicorn app.main:app --reload      # http://localhost:8000/health
 
@@ -283,6 +296,7 @@ campus-notice-hub/
 | 需求追溯矩阵 | [需求追溯矩阵](docs/02-需求规约/需求追溯矩阵.md) | 第 3 / 5 次课 |
 | 分析模型 | [用例图](docs/03-需求分析模型/用例图.md) · [类图](docs/03-需求分析模型/类图与CRC.md) · [状态图](docs/03-需求分析模型/状态图与顺序图.md) | 第 4 / 5 次课 |
 | 概要 / 详细设计 | [概要设计](docs/04-设计/概要设计.md) · [详细设计](docs/04-设计/详细设计.md) | 第 6 / 7 次课 |
+| 通知通道设计 | [通知通道](docs/04-设计/通知通道.md) | 第 6 次课 |
 | 测试计划与报告 | [05-测试/](docs/05-测试/) | 第 7 次课起 |
 | 演示脚本 | [演示脚本](docs/07-部署/演示脚本.md) | 期末 |
 | AI 使用报告 | [AI使用报告](docs/08-AI使用/AI使用报告.md) | 期末 |
