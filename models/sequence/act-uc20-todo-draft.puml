@@ -1,0 +1,60 @@
+@startuml act-uc20-todo-draft
+' ============================================================
+' UC-20 从通知生成待办草稿 · 活动图
+' 对应 FR-14、R2（文本抽取不准）
+' ============================================================
+title UC-20 从通知生成待办草稿
+
+skinparam defaultFontName "Microsoft YaHei"
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #F7FBFF
+  BorderColor #2C5F8A
+  DiamondBackgroundColor #FFFFFF
+}
+skinparam note {
+  BackgroundColor #FFF9E6
+  BorderColor #C9A227
+}
+
+start
+
+:扫描尚未处理的文本通知;
+note right
+  结构化源不走本流程，
+  由 UC-16/17/18/19 直接生成
+end note
+
+:抽取「事项 + 时间 + 办理入口」;
+
+if (是否抽取到截止时间?) then (是)
+  :生成草稿，含截止时间;
+else (否)
+  :生成草稿，截止时间留空;
+  note right
+    不报错，给「手动建待办」入口
+  end note
+endif
+
+:保留原文高亮片段，供用户核对;
+
+:草稿入草稿箱（状态 = 草稿）;
+note right
+  **系统不得自动确认**
+  确认权只在用户
+end note
+
+if (用户是否确认?) then (是)
+  :状态转为「已确认」;
+  :进入待办列表并参与提醒;
+else (否)
+  if (用户是否删除?) then (是)
+    :状态转为「已取消」;
+  else (否)
+    :保持草稿，等待下次处理;
+  endif
+endif
+
+stop
+
+@enduml

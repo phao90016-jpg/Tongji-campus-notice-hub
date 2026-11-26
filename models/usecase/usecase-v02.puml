@@ -1,0 +1,64 @@
+@startuml usecase-v02
+' ============================================================
+' 校园待办中心 · v0.2 主链路用例图
+' 用途：课堂讲解（8 分钟）与 v0.2 验收
+' 完整用例见 usecase-overview.puml
+' ============================================================
+title v0.2 主链路：结构化待办 → 提醒
+
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam usecase {
+  BackgroundColor #F7FBFF
+  BorderColor #2C5F8A
+}
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #2C5F8A
+}
+
+actor 学生 as STU
+actor "定时调度器" as SCHED <<系统角色>>
+actor "开放平台数据接口" as OPEN <<外部系统>>
+actor "微信服务号" as WX <<外部系统>>
+actor "邮件 SMTP" as MAIL <<外部系统>>
+
+rectangle "校园待办中心 · v0.2" {
+  usecase "UC-35 自动归类通知到课程与类型" as UC35
+  usecase "UC-36 同步毕设与实习节点" as UC36
+  usecase "UC-16 生成考试待办" as UC16
+  usecase "UC-17 生成上课待办（重复）" as UC17
+  usecase "UC-20 生成待办草稿" as UC20
+  usecase "UC-21 确认与编辑待办" as UC21
+  usecase "UC-22 更新待办状态" as UC22
+  usecase "UC-24 设置提醒规则" as UC24
+  usecase "UC-26 接收截止提醒" as UC26
+  usecase "UC-34 登记课程作业" as UC34
+}
+
+STU --> UC21
+STU --> UC22
+STU --> UC24
+STU --> UC26
+STU --> UC34
+
+SCHED --> UC35
+SCHED --> UC36
+SCHED --> UC16
+SCHED --> UC17
+SCHED --> UC20
+SCHED --> UC26
+
+OPEN --> UC16
+OPEN --> UC17
+OPEN --> UC36
+WX --> UC26
+MAIL --> UC26
+
+UC20 ..> UC21 : <<include>>
+UC16 ..> UC21
+UC21 ..> UC22
+UC22 ..> UC24
+UC24 ..> UC26 : <<include>>
+
+@enduml

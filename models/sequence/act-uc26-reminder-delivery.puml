@@ -1,0 +1,65 @@
+@startuml act-uc26-reminder-delivery
+' ============================================================
+' UC-26 接收新消息与截止提醒 · 活动图
+' 对应 SRS §4.3.5、NFR-3、R3（提醒丢失）
+' ============================================================
+title UC-26 接收新消息与截止提醒
+
+skinparam defaultFontName "Microsoft YaHei"
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #F7FBFF
+  BorderColor #2C5F8A
+  DiamondBackgroundColor #FFFFFF
+}
+skinparam note {
+  BackgroundColor #FFF9E6
+  BorderColor #C9A227
+}
+
+start
+
+:调度器扫描到期提醒任务;
+note right
+  条件：status = pending
+  且 plan_time <= now
+end note
+
+if (待办已完成或已取消?) then (是)
+  :任务标记 cancelled;
+  stop
+endif
+
+:按渠道顺序取主通道（微信服务号）;
+
+:调用通道接口投递;
+
+:写投递记录（通道 / 耗时 / 返回码）;
+
+if (投递成功?) then (是)
+  :任务标记 sent;
+else (否)
+  if (还有下一个通道?) then (是)
+    :降级到下一通道（邮件 → 站内）;
+    note right
+      3s 内判定超时并降级，
+      避免阻塞提醒队列
+    end note
+    :再次投递并写记录;
+    if (本次成功?) then (是)
+      :任务标记 sent;
+    else (否)
+      :任务标记 failed;
+      :进入重试队列;
+    endif
+  else (否)
+    :任务标记 failed;
+    :进入重试队列;
+  endif
+endif
+
+:后台可见该待办的全部投递记录;
+
+stop
+
+@enduml

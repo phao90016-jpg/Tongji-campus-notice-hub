@@ -101,11 +101,15 @@
 
 | 路径 | 放什么 | 不放什么 |
 |---|---|---|
-| `docs/` | 全部课程交付物，Markdown | 截图、临时草稿 |
-| `models/` | 图源文件（`.mmd` / `.puml`） | 导出的 PNG |
+| `docs/` | 全部课程交付物，Markdown | 临时草稿 |
+| `docs/assets/` | 文档引用的渲染图（PNG），便于插入 Word 与 GitHub 预览 | 源文件 |
+| `models/` | 图源文件（`.mmd` / `.puml` / `.svg`） | 临时导出物 |
 | `src/backend/app/adapters/` | 各源适配器 | 业务规则、写库逻辑 |
 | `src/backend/app/services/` | 用例编排、事务边界 | HTTP 参数校验 |
-| `scripts/` | 造数、压测脚本 | 业务代码 |
+| `scripts/` | 造数、压测、图生成脚本 | 业务代码 |
+
+> 图的规矩：**源文件进 `models/`，渲染图进 `docs/assets/`，文档用相对路径引用 `../assets/xxx.png`**。
+> 一图一 PR；改了 `.puml` 要同步重渲染并替换 `docs/assets/` 里的图，避免图文不一致。
 
 ## 9. 常见问题
 

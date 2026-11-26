@@ -1,0 +1,47 @@
+@startuml usecase-v03
+' ============================================================
+' 校园待办中心 · v0.3 主链路用例图
+' 用途：课堂讲解（8 分钟）与 v0.3 验收
+' 完整用例见 usecase-overview.puml
+' ============================================================
+title v0.3 主链路：资料复用 + 管理面
+
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam usecase {
+  BackgroundColor #F7FBFF
+  BorderColor #2C5F8A
+}
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #2C5F8A
+}
+
+actor 学生 as STU
+actor "班委 / 组织干事" as PUB
+actor 系统管理员 as ADM
+
+rectangle "校园待办中心 · v0.3" {
+  usecase "UC-28 收藏资料并添加标签" as UC28
+  usecase "UC-29 关联资料到课程" as UC29
+  usecase "UC-30 搜索通知与资料" as UC30
+  usecase "UC-31 发布班级通知并查看阅读情况" as UC31
+  usecase "UC-32 维护信息源与同步任务" as UC32
+  usecase "UC-33 用户与角色管理" as UC33
+  usecase "NFR-UC-04 首屏响应与登录同步时效" as N4
+}
+
+STU --> UC28
+STU --> UC29
+STU --> UC30
+STU --> N4
+
+PUB --> UC31
+
+ADM --> UC32
+ADM --> UC33
+
+UC28 ..> UC29 : 可关联
+UC29 ..> UC30 : <<include>>
+
+@enduml

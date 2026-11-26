@@ -1,0 +1,58 @@
+@startuml act-uc02-first-sync
+' ============================================================
+' UC-02 首次登录同步校内数据 · 活动图
+' 对应 SRS §4.3.4
+' ============================================================
+title UC-02 首次登录同步校内数据
+
+skinparam defaultFontName "Microsoft YaHei"
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #F7FBFF
+  BorderColor #2C5F8A
+  DiamondBackgroundColor #FFFFFF
+}
+skinparam note {
+  BackgroundColor #FFF9E6
+  BorderColor #C9A227
+}
+
+start
+
+:UC-01 登录成功，后端异步派发同步任务;
+note right
+  前端先出骨架屏，
+  不等待同步完成
+end note
+
+fork
+  :拉取课表;
+fork again
+  :拉取考试与补缓考;
+fork again
+  :拉取教务通知;
+fork again
+  :拉取毕设与实习节点;
+fork again
+  :拉取一网通办待办;
+end fork
+
+:各路归一化为统一实体;
+
+:按业务主键 (source, external_id) 去重入库;
+
+if (本路是否失败?) then (是)
+  :该路标记失败;
+  :前端显示「重试」入口;
+  note right
+    不影响其余路继续填充
+  end note
+else (否)
+  :推送前端填充该区块;
+endif
+
+:写同步记录（各路耗时 / 条数 / 结果）;
+
+stop
+
+@enduml
